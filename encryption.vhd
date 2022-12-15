@@ -9,7 +9,7 @@ entity encryption is
 		clk, rst, proceed : IN std_logic;
 		s: inout std_logic_vector(127 downto 0);
 		m: IN std_logic_vector(63 downto 0); -- ini harusnya mlen
-		c: out std_logic_vector(63 downto 0);
+		c: inout std_logic_vector(63 downto 0)
 	);
 end encryption;
 
@@ -47,8 +47,9 @@ process(rst, clk)
 	
 	process( proceed, cState )
 	variable j : integer := 0;
-	variable lenp : std_logic;
-	variable startp: std_logic; 
+	variable lenp : integer;
+	variable startp: integer; 
+	variable mlen: integer := 64;
 	begin 
 	case cState is 
 
@@ -72,9 +73,6 @@ process(rst, clk)
 	when s1 =>
 		s <= s;
 		k <= k;
-		rst <= rst; 
-		clk <= clk;
-		proceed <= proceed;
 		i <= 1024;
 		nState <= s2;
 	
@@ -93,18 +91,15 @@ process(rst, clk)
 	when s5 =>
 		s <= s;
 		k <= k;
-		rst <= rst; 
-		clk <= clk;
-		proceed <= proceed;
 		i <= 1024;
 		nState <= s6;
 	
 	when s6 =>
-		lenp <= 64 mod 32; -- harusnya mlen
+		lenp := 64 mod 32; -- harusnya mlen
 		nState <= s7;
 	
 	when s7 =>
-		startp <= 64 - lenp; -- harusnya mlen
+		startp := 64 - lenp; -- harusnya mlen
 		nState <= s8;
 	
 	when s8 =>
@@ -116,8 +111,8 @@ process(rst, clk)
 		nState <= s10;
 		
 	when s10 =>
-		slv_value <= std_logic_vector(to_unsigned(lenp, 2))
-		s(33 downto 32) <= s(33 downto 32) xor (slv_value/8);
+		slv_value <= std_logic_vector(to_unsigned(lenp, 2));
+		s(33 downto 32) <= s(33 downto 32) xor (slv_value);
 		nState <= s11;
 		
 	when s11 =>
