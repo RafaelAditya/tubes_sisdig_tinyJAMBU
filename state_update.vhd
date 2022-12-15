@@ -5,20 +5,17 @@ use IEEE.std_logic_unsigned.all;
 
 entity state_update is
 port( 
-	s : IN std_logic_vector(127 downto 0);
-	k : IN std_logic_vector(127 downto 0);
+	signal s : inout std_logic_vector(127 downto 0);
+	signal k : IN std_logic_vector(127 downto 0);
 	rst, clk, proceed: IN std_logic;
-	i : IN integer;
-	
-	feedback : out std_logic;
-);
+	signal i : IN integer;
+	signal feedback : inout std_logic );
 end state_update;
 
 architecture state_update_arc of state_update is
 	type states is (init, s0, s1, s2);
 	signal nState, cState : states;
-	j : integer := 0;
-
+	signal j : integer := 0;
 begin
 	process(rst, clk)
 	begin
@@ -41,17 +38,17 @@ begin
 		end if;
 	
 	when s0 =>
-		feedback <= s(0) xor s(47) xor (not(s(70) and s(85))) xor s(91) xor k(i mod 128) 
+		feedback <= s(0) xor s(47) xor (not(s(70) and s(85))) xor s(91) xor k(i mod 128);
 		nState <= s1;
 	
 	when s1 =>
 		for j in 0 to 126 loop
 			s(j) <= s(j+1);
-		end loop
+		end loop;
 		nState <= s2;
 	
 	when s2 => 
 		s(127) <= feedback;
 	end case;
-	
-end state_update_arc;	
+	end process;
+end state_update_arc;
