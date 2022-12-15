@@ -10,9 +10,9 @@ entity decryption is
 	clk, rst, proceed : IN std_logic;
 	s: inout std_logic_vector(127 downto 0);
 	c: in std_logic_vector(63 downto 0);
-	m: out std_logic_vector(63 downto 0)
+	m: inout std_logic_vector(63 downto 0)
 	);
-end decryption
+end decryption;
 
 architecture decryption_arc of decryption is
 	type states is (init, s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12);
@@ -20,7 +20,7 @@ architecture decryption_arc of decryption is
 	signal slv_value : std_logic_vector(1 downto 0);
 	signal i : integer;
 	signal k : std_logic_vector(127 downto 0);
-	signal framebits: std_logic_vector(2 downto 0) := '101';
+	signal framebits: std_logic_vector(2 downto 0) := "101";
 	signal feedback : std_logic;
 	signal mlen : integer;
 	
@@ -73,15 +73,12 @@ process(rst, clk)
 		end if;
 	
 	when s1 =>
-		s(38 downto 36) <= s(38 downto 36) xor framebits;
+		s(38 downto 36) <= s(38 downto 36) xor framebits(2 downto 0);
 		nState <= s2;
 	
 	when s2 =>
 		s <= s;
 		k <= k;
-		rst <= rst; 
-		clk <= clk;
-		proceed <= proceed;
 		i <= 1024;
 		nState <= s3;
 		
@@ -91,7 +88,7 @@ process(rst, clk)
 		
 	when s4 =>
 		s(127 downto 96) <= s(127 downto 96) xor m((32*j + 31) downto 32*j);
-		j <= j+1;
+		j := j+1;
 	
 	when s5 =>
 		s(38 downto 36) <= s(38 downto 36) xor framebits;
@@ -100,22 +97,19 @@ process(rst, clk)
 	when s6 =>
 		s <= s;
 		k <= k;
-		rst <= rst; 
-		clk <= clk;
-		proceed <= proceed;
 		i <= 1024;
 		nState <= s7;
 	
 	when s7 =>
-		lenp <= mlen mod 32;
+		lenp := mlen mod 32;
 		nState <= s8;
 		
 	when s8 =>
-		startp <= mlen - lenp;
+		startp := mlen - lenp;
 		nState <= s9;
 	
 	when s9 =>
-		m((mlen-1) downto startp) <=  s((96+lenp-1) downto 96) xor c(mlen-1 downto starp);
+		m((mlen-1) downto startp) <=  s((96+lenp-1) downto 96) xor c(mlen-1 downto startp);
 		nState <= s10;
 		
 	when s10 =>
@@ -125,7 +119,7 @@ process(rst, clk)
 	when s11 =>
 		slv_value <= std_logic_vector(to_unsigned(lenp, 2));
 		s(33 downto 32) <= s(33 downto 32) xor (slv_value);
-		nState <= s12
+		nState <= s12;
 	
 	when s12 =>
 	
