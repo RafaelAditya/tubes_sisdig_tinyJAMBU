@@ -2,26 +2,22 @@ Library IEEE;
 use IEEE.std_logic_1164.all;
 use IEEE.std_logic_arith.all;
 use IEEE.std_logic_unsigned.all;
-use work.state_update.all;
 
 entity initialization is
 port (
 	clk, rst, proceed : IN std_logic;
 	s: inout std_logic_vector(127 downto 0);
 	nonce: IN std_logic_vector(95 downto 0);
-	feedback : out std_logic;
+	feedback : inout std_logic
 );
 end initialization;
 
 architecture initialization_arc of initialization is
 	type states is (init, s0, s1, s2, s3, s4, s5, s6);
 	signal nState, cState : states;
-	
-	i : integer;
-	j : integer := 0;
-	k : std_logic_vector(127 downto 0);
- 	framebits: std_logic_vector(2 downto 0) := '001';
-	
+	signal k : std_logic_vector(127 downto 0);
+ 	signal framebits: std_logic_vector(2 downto 0) := "001";
+	signal i : integer; 
 begin
 	state_update : entity work.state_update(state_update_arc) port map(
 	s => s,
@@ -34,8 +30,6 @@ begin
 	feedback => feedback
 	);
 	
-	type states is (init, s0, s1, s2, s3, s4, s5, s6);
-	signal nState, cState : states;
 	
 	process(rst, clk)
 	begin
@@ -47,7 +41,9 @@ begin
 	end process;
 	
 	process( proceed, cState )
-	case cState
+	variable j : integer := 0; 
+	begin
+	case cState is
 	
 	when init => 
 		if (proceed = '0') then
@@ -63,9 +59,6 @@ begin
 	when s1 =>
 		s <= s;
 		k <= k;
-		rst <= rst; 
-		clk <= clk;
-		proceed <= proceed;
 		i <= 1024;
 		nState <= s2;
 		
@@ -75,7 +68,7 @@ begin
 			nState <= s3;
 		else
 			nState <= s6;
-	
+		end if;
 	when s3 =>
 		s(38 downto 36) <= s(38 downto 36) xor framebits;
 		nState <= s4;
@@ -83,18 +76,16 @@ begin
 	when s4 =>
 		s <= s;
 		k <= k;
-		rst <= rst; 
-		clk <= clk;
-		proceed <= proceed;
 		i <= 640;
 		nState <= s5;
 		
 	when s5 =>
-		s(127 downto 96) <= s(127 downto 96) xor nonce((32*i + 31) downto 32*i);	
-		i <= j + 1;
+		s(127 downto 96) <= s(127 downto 96) xor nonce((32*j + 31) downto 32*j);	
+		j := j + 1;
 		nState <= s2;
 		
 	when s6 => 	
 	end case;
 end process;
+
 end initialization_arc;
