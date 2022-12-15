@@ -6,6 +6,7 @@ use work.all;
 
 entity top_level_entity is 
     port(
+	clk, rst, proceed : in std_logic;
         io_text : inout std_logic_vector(127 downto 0);
         key : in std_logic_vector(127 downto 0);
         nonce : in std_logic_vector(95 downto 0);
@@ -16,6 +17,16 @@ entity top_level_entity is
 end top_level_entity;
 
 architecture top_level_entity_arc of top_level_entity is
+	signal i : integer;
+	signal k : std_logic_vector(127 downto 0);
+	signal framebits: std_logic_vector(2 downto 0);
+	signal feedback : std_logic;
+signal ad: STD_LOGIC_VECTOR(63 downto 0);
+signal t: STD_LOGIC_VECTOR(63 downto 0);
+signal s: STD_LOGIC_VECTOR(127 downto 0);
+signal m: STD_LOGIC_VECTOR(63 downto 0);
+signal c: STD_LOGIC_VECTOR(63 downto 0);
+signal t_aksen: STD_LOGIC_VECTOR(63 downto 0);
 
 -- komponen initialization
 component initialization is
@@ -75,63 +86,13 @@ component verification is
     );
 end component;
 
-    type states is (init, s0, s1, s2, s3, s4, s5)
-	signal nState, cState : states;
-	signal i : integer;
-	signal k : std_logic_vector(127 downto 0);
-	signal framebits: std_logic_vector(2 downto 0);
-	signal feedback : std_logic;
+begin 
 
-    process(rst, clk)
-	begin
-	if (rst = '1') then
-		cState <= init;
-	elsif( clk'event and clk = '1' ) then
-		cState <= nState;
-	end if;
-	end process;
-	
-	process( proceed, cState )
-	-- variable j : integer := 0;
-	-- variable lenp : integer;
-	-- variable startp: integer; 
-	-- variable mlen: integer := 64;
-	begin 
-	case cState is 
-
-	when init => 
-		if (proceed = '0') then
-			nState <= init;
-		else
-            if sel_ed = '0' then
-			    nState <= s0;
-            else
-                nState <= s4;
-            end if;
-		end if;
-    
-    when s0 =>
         toinitial : initialization port map (clk, rst, proceed, s, nonce, feedback);
-        nState <= s1;
-    
-    when s1 =>
         toprocessad : process_ad port map (ad, clk, rst, proceed, s);
-        nState <= s2;
-    
-    when s2 =>
         toencryption : encryption port map (clk, rst, proceed, s, m, c);
-        nState <= s3;
-    
-    when s3 =>
-        tofinalization : finalization port map (signal clk, signal rst, signal proceed , signal s, signal t);
-    
-    when s4 =>
-        todecryption : decryption port map (clk, rst, proceed, s, c, m);
-        nState <= s5;
-    
-    when s5 =>
+        tofinalization : finalization port map ( clk,  rst,  proceed ,  s,  t);
+       	todecryption : decryption port map (clk, rst, proceed, s, c, m);
         toverification : verification port map (clk, rst, proceed, s, t, t_aksen);
 
-    end case;
-    end process;
 end top_level_entity_arc;
